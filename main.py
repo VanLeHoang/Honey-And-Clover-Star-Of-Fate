@@ -23,7 +23,7 @@ mud = pygame.Color(139, 131, 120)
 khaki = pygame.Color(205, 192, 176)
 
 background = pygame.image.load("chatbox.png").convert_alpha()
-dialog1 = chatbox.Chatbox(0, 0, 400, 200, background, "Roboto", 30, mud, "Hello, I am Van and I love Wade. He is my honeyboo <3")
+dialog1 = chatbox.Chatbox(0, 0, 400, 200, background, "Roboto", 30, mud, "Hello, I am Van and I love Wade. He is my honeyboo <3 absd ajs sd  adsasd f sjjd ahoiwad lhsadhls lhsdhls jdsbhs dlahd  ahdnls dsad lhh111")
 
 running = True
 while running:
@@ -31,17 +31,18 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.KEYDOWN:
-            dialog1.closed = True
+            dialog1.finish = True
 
     # filling the window with beige color
     window.fill(beige)
 
     if not dialog1.finish:
         dialog1.typing(window)
-    elif dialog1.finish and not dialog1.closed:
-        dialog1.end(window)
-    elif dialog1.closed:
-        dialog1.close(window)
+    else:
+        if dialog1.background.get_width() > 0:
+            dialog1.zoom_out(window)
+        else:
+            pass
 
     # updating the window
     pygame.display.update()
