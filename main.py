@@ -18,7 +18,7 @@ fps = pygame.time.Clock()
 game_speed = 13
 
 # defining colors
-beige = pygame.Color(250, 235, 215)
+beige = pygame.Color(250, 235, 211)
 mud = pygame.Color(139, 131, 120)
 khaki = pygame.Color(205, 192, 176)
 
@@ -39,7 +39,7 @@ while running:
     if not dialog1.finish:
         dialog1.typing(window)
     else:
-        if dialog1.background.get_width() > 0:
+        if dialog1.new_background.get_width() > 0:
             dialog1.zoom_out(window)
         else:
             pass

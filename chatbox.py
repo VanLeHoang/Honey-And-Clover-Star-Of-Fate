@@ -9,25 +9,27 @@ class Chatbox:
         self.color = color
         self.width = width
         self.height = height
-        self.background = background
         self.spacing = self.font.get_height() + 11
+        self.background = background
+
+        self.background_w = 0
+        self.background_h = 0
+        self.new_background = self.background
 
         # initialize the chatbox
         self.text_box_rect = pygame.Rect(x, y, width, height)
-        self.background = pygame.transform.scale(self.background, (int(self.text_box_rect.width * 0.1), int(self.text_box_rect.height * 0.1)))
+        self.new_background = pygame.transform.scale(self.new_background, (self.background_w, self.background_h))
 
         # initialize the text
-        self.text_surface = self.font.render("", True, self.color)
-        self.text_rect = pygame.Rect(0, 0, width - self.spacing * 2.7, height - self.spacing * 3)
-        self.text_rect.center = self.text_box_rect.center
-        self.text_rect.y = self.text_box_rect.y + self.spacing
+        self.text_rect = pygame.Rect(0, 0, width - self.spacing * 1.7, height * (28 / 33) - self.spacing * 1.7)
+        self.text_rect.midtop = self.text_box_rect.midtop
+        self.text_rect.y = self.text_box_rect.y + int(self.spacing * 1.7 / 2)
 
         # initialize the pointer position
         self.cur_line = 0
         self.start_line = 0
         self.cur_cha = 0
         self.finish = False
-        self.closed = False
 
         self.opacity = 255
         self.scale = 0.7
@@ -51,20 +53,22 @@ class Chatbox:
 
     # window zoom in effect
     def zoom_in(self):
-        new_width = min(int(self.background.get_width() + self.text_box_rect.width * 0.1), self.text_box_rect.width)
-        new_height = min(int(self.background.get_height() + self.text_box_rect.height * 0.1), self.text_box_rect.height)
-        self.background = pygame.transform.scale(self.background, (new_width, new_height))
-        bl_corner = (self.text_box_rect.x, self.text_box_rect.bottom - self.background.get_height())
-        
+        self.new_background = self.background
+        self.background_w = min(self.background_w + 0.07, 1)
+        self.background_h = min(self.background_h + 0.07, 1)
+        self.new_background = pygame.transform.scale(self.new_background, (self.width * self.background_w, self.height * self.background_h))
+        bl_corner = (self.text_box_rect.x, self.text_box_rect.bottom - self.new_background.get_height())
+
         return bl_corner
-    
+
     # window zoom out effect
     def zoom_out(self, window):
-        new_width = max(int(self.background.get_width() - self.text_box_rect.width * 0.1), 0)
-        new_height = max(int(self.background.get_height() - self.text_box_rect.height * 0.1), 0)
-        self.background = pygame.transform.scale(self.background, (new_width, new_height))
-        bl_corner = (self.text_box_rect.x, self.text_box_rect.bottom - self.background.get_height())
-        window.blit(self.background, bl_corner)
+        self.new_background = self.background
+        self.background_w = max(self.background_w - 0.11, 0)
+        self.background_h = max(self.background_h - 0.11, 0)
+        self.new_background = pygame.transform.scale(self.new_background, (self.width * self.background_w, self.height * self.background_h))
+        bl_corner = (self.text_box_rect.x, self.text_box_rect.bottom - self.new_background.get_height())
+        window.blit(self.new_background, bl_corner)
 
     # display the prompt command at the end of dialog
     def prompt(self):
@@ -92,27 +96,39 @@ class Chatbox:
         num_line = len(self.lines) - 1
         num_cha = len(self.lines[self.cur_line]) - 1
 
-        if self.background.get_width() < self.text_box_rect.width:
-            window.blit(self.background, self.zoom_in())
+        if self.new_background.get_width() < self.text_box_rect.width:
+            window.blit(self.new_background, self.zoom_in())
         else:
-            if self.cur_line != num_line or self.cur_cha != num_cha:
-                window.blit(self.background, self.text_box_rect)
+            # typing until the last character of the last line
+            if self.cur_cha != num_cha or self.cur_line != num_line:
+                window.blit(self.new_background, self.text_box_rect)
                 for i in range(self.start_line, self.cur_line):
                     line_surface = self.font.render(self.lines[i], True, self.color)
                     window.blit(line_surface, (self.text_rect.x, self.text_rect.y + self.spacing * (i - self.start_line)))
-                self.text_surface = self.font.render(self.lines[self.cur_line][:self.cur_cha], True, self.color)
-                window.blit(self.text_surface, (self.text_rect.x, self.text_rect.y + self.spacing * (self.cur_line - self.start_line)))
+                text_surface = self.font.render(self.lines[self.cur_line][:self.cur_cha], True, self.color)
+                window.blit(text_surface, (self.text_rect.x, self.text_rect.y + self.spacing * (self.cur_line - self.start_line)))
                 if self.cur_cha < num_cha:
                     self.cur_cha += 1
                 if self.cur_cha == num_cha and self.cur_line < num_line:
                     self.cur_line += 1
                     self.cur_cha = 0
+                    # shift up when dialog exceeds text box' height
                     if self.spacing * self.cur_line > self.text_rect.height:
                         self.start_line += 1
+                # finish the last character
+                if self.cur_cha == num_cha and self.cur_line == num_line:
+                    self.delay = time.time()
+                    window.blit(self.new_background, self.text_box_rect)
+                    for i in range(self.start_line, self.cur_line):
+                        line_surface = self.font.render(self.lines[i], True, self.color)
+                        window.blit(line_surface, (self.text_rect.x, self.text_rect.y + self.spacing * (i - self.start_line)))
+                    text_surface = self.font.render(self.lines[self.cur_line][:self.cur_cha], True, self.color)
+                    window.blit(text_surface, (self.text_rect.x, self.text_rect.y + self.spacing * (self.cur_line - self.start_line)))
             else:
-                window.blit(self.background, self.text_box_rect)
+                window.blit(self.new_background, self.text_box_rect)
                 for i in range(self.start_line + 1, len(self.lines)):
                     line_surface = self.font.render(self.lines[i], True, self.color)
                     window.blit(line_surface, (self.text_rect.x, self.text_rect.y + self.spacing * (i - self.start_line - 1)))
-                prompt = self.prompt()
-                window.blit(prompt[0], prompt[1])
+                if time.time() - self.delay >= 0.3:
+                    prompt = self.prompt()
+                    window.blit(prompt[0], prompt[1])
