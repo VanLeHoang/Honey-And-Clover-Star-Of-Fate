@@ -1,16 +1,15 @@
 import pygame
 import time
-import random
 
 class Chatbox:
-    def __init__(self, x, y, width, height, background, font, size, color, text):
+    def __init__(self, x, y, width, height, background_img, font, size, color, text):
         self.text = text
         self.font = pygame.font.SysFont(font, size)
         self.color = color
         self.width = width
         self.height = height
         self.spacing = self.font.get_height() + 11
-        self.background = background
+        self.background = pygame.image.load(background_img).convert_alpha()
 
         self.background_w = 0
         self.background_h = 0
@@ -32,7 +31,7 @@ class Chatbox:
         self.finish = False
 
         self.opacity = 255
-        self.scale = 0.7
+        self.scale = 0.9
         self.decrease = True
 
         # word will drop to a new line if it exceeds the width of the chatbox
@@ -79,15 +78,15 @@ class Chatbox:
         end_rect = end_surface.get_rect()
         end_rect.midbottom = self.text_rect.midbottom
 
-        if self.decrease and self.scale > 0.60:
+        if self.decrease and self.scale > 0.70:
             self.scale -= 0.011
             self.opacity -= 0
-            if self.scale <= 0.60:
+            if self.scale <= 0.70:
                 self.decrease = False
-        elif not self.decrease and self.scale < 0.70:
+        elif not self.decrease and self.scale < 0.90:
             self.scale += 0.011
             self.opacity += 0
-            if self.scale >= 0.70:
+            if self.scale >= 0.90:
                 self.decrease = True
         return end_surface, end_rect
 
@@ -132,3 +131,22 @@ class Chatbox:
                 if time.time() - self.delay >= 0.3:
                     prompt = self.prompt()
                     window.blit(prompt[0], prompt[1])
+
+class Character:
+	def __init__ (self, x, y, width, height, spritesheet_img, action_list):
+		self.width = width
+		self.height = height
+		self.sheet = pygame.image.load(spritesheet_img).convert_alpha()
+		self.sheet_h = self.sheet.get_height()
+		self.actions = action_list
+
+		self.character_rect = pygame.Rect(x, y, width, height)
+		self.animation = []
+
+		for action in action_list:
+			action_frames = []
+			for count in range(action):
+				frame = pygame.Surface((self.sheet_h, self.sheet_h), pygame.SRCALPHA)
+				frame.blit(self.sheet, (0, 0), (self.sheet_h * count, 0, self.sheet_h, self.sheet_h))
+				action_frames.append(frame)
+			self.animation.append(action_frames)
