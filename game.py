@@ -140,13 +140,79 @@ class Character:
 		self.sheet_h = self.sheet.get_height()
 		self.actions = action_list
 
+		# animation definition
 		self.character_rect = pygame.Rect(x, y, width, height)
 		self.animation = []
+		self.frame_count = 0
+		self.current_frame = 0
+		self.current_action = 0
+		self.start_time = time.time()
+		self.current_time = time.time()
+
+		# jumping definition
+		self.jumping = False
+		self.landed = True
+		self.gravity = self.height // 3
 
 		for action in action_list:
 			action_frames = []
-			for count in range(action):
+			for _ in range(action):
 				frame = pygame.Surface((self.sheet_h, self.sheet_h), pygame.SRCALPHA)
-				frame.blit(self.sheet, (0, 0), (self.sheet_h * count, 0, self.sheet_h, self.sheet_h))
+				frame.blit(self.sheet, (0, 0), (self.sheet_h * self.frame_count, 0, self.sheet_h, self.sheet_h))
 				action_frames.append(frame)
+				self.frame_count += 1
 			self.animation.append(action_frames)
+
+	def animate(self, action, direction, window):
+		# reset current frame when character change action
+		if self.current_action != action:
+			self.current_frame = 0
+			self.current_action = action
+		frame_rate = 0.3
+		self.current_time = time.time()
+		frame = pygame.transform.scale(self.animation[action][self.current_frame], self.character_rect.size)
+
+		if direction == 'LEFT':
+			window.blit(pygame.transform.flip(frame, True, False), self.character_rect)
+		else:
+			window.blit(frame, self.character_rect)
+
+		match action:
+			case 0: # idle
+				self.character_rect.bottom = window.get_height()
+				if self.current_time - self.start_time > frame_rate:
+					self.current_frame = (self.current_frame + 1) % len(self.animation[action])
+					self.start_time = self.current_time
+			case 1: # walk
+				self.character_rect.bottom = window.get_height()
+				if self.current_time - self.start_time > frame_rate:
+					self.current_frame = (self.current_frame + 1) % len(self.animation[action])
+					self.start_time = self.current_time
+			case 2: # attack
+				pass
+			case 3: # jump
+				if self.current_frame < 2:
+					if self.current_time - self.start_time > frame_rate - 0.17:
+						self.character_rect.bottom += 11
+						self.current_frame = (self.current_frame + 1) % len(self.animation[action])
+						self.start_time = self.current_time
+				else:
+					if self.jumping:
+						self.current_frame = 2
+						self.landed = False
+						self.gravity -= 9
+						self.character_rect.bottom -= max(self.gravity, 0)
+						if self.gravity <= 0:
+							self.current_frame = 3
+							self.gravity = 0
+							self.jumping = False
+					else:
+						if self.character_rect.bottom < window.get_height():
+							self.current_frame = 4
+							self.gravity += 11
+							self.character_rect.bottom += self.gravity
+						else:
+							self.current_frame = 5
+							self.landed = True
+							self.character_rect.bottom = window.get_height()
+							self.gravity = self.height // 3
