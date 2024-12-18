@@ -133,16 +133,18 @@ class Chatbox:
                     window.blit(prompt[0], prompt[1])
 
 class Character:
-	def __init__ (self, x, y, width, height, spritesheet_img, action_list):
+	def __init__ (self, x, y, width, height, character_sprite, action_list):
 		self.width = width
 		self.height = height
-		self.sheet = pygame.image.load(spritesheet_img).convert_alpha()
-		self.sheet_h = self.sheet.get_height()
+		self.character_sprite = pygame.image.load(character_sprite).convert_alpha()
+		self.sheet_h = self.character_sprite.get_height()
 		self.actions = action_list
 
 		# animation definition
 		self.character_rect = pygame.Rect(x, y, width, height)
+		self.effect_rect = pygame.Rect(x, y, width // 3, height)
 		self.animation = []
+		self.effect = []
 		self.frame_count = 0
 		self.current_frame = 0
 		self.current_action = 0
@@ -152,16 +154,19 @@ class Character:
 		# jumping definition
 		self.jumping = False
 		self.landed = True
+		self.slash = False
 		self.gravity = self.height // 3
 
+		# make a list of frames based on each action
 		for action in action_list:
 			action_frames = []
 			for _ in range(action):
 				frame = pygame.Surface((self.sheet_h, self.sheet_h), pygame.SRCALPHA)
-				frame.blit(self.sheet, (0, 0), (self.sheet_h * self.frame_count, 0, self.sheet_h, self.sheet_h))
+				frame.blit(self.character_sprite, (0, 0), (self.sheet_h * self.frame_count, 0, self.sheet_h, self.sheet_h))
 				action_frames.append(frame)
 				self.frame_count += 1
 			self.animation.append(action_frames)
+		self.frame_count = 0
 
 	def animate(self, action, direction, window):
 		# reset current frame when character change action
@@ -189,7 +194,12 @@ class Character:
 					self.current_frame = (self.current_frame + 1) % len(self.animation[action])
 					self.start_time = self.current_time
 			case 2: # attack
-				pass
+				if self.current_time - self.start_time > frame_rate - 0.17:
+					self.current_frame = (self.current_frame + 1) % len(self.animation[action])
+					self.start_time = self.current_time
+					if self.current_frame == 0:
+						self.slash = False
+						action = 0
 			case 3: # jump
 				if self.current_frame < 2:
 					if self.current_time - self.start_time > frame_rate - 0.17:
@@ -200,7 +210,7 @@ class Character:
 					if self.jumping:
 						self.current_frame = 2
 						self.landed = False
-						self.gravity -= 9
+						self.gravity -= self.height // 27
 						self.character_rect.bottom -= max(self.gravity, 0)
 						if self.gravity <= 0:
 							self.current_frame = 3
@@ -209,7 +219,7 @@ class Character:
 					else:
 						if self.character_rect.bottom < window.get_height():
 							self.current_frame = 4
-							self.gravity += 11
+							self.gravity += self.height // 17
 							self.character_rect.bottom += self.gravity
 						else:
 							self.current_frame = 5

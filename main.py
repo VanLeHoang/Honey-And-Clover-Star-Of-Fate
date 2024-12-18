@@ -23,13 +23,11 @@ mud = pygame.Color(139, 131, 120)
 khaki = pygame.Color(205, 192, 176)
 
 # defining character:
-clover_size = [270, 270]
+clover_size = [170, 170]
 
 # default setting
 action = 0
 direction = 'IDLE'
-jumping = False
-gravity = 17
 
 dialog1 = game.Chatbox(0, 0, 400, 200, "chatbox.png", "Roboto", 30, mud, "Hello, I am Van and I love Wade. He is my honeyboo <3 absd ajs sd  adsasd f sjjd ahoiwad lhsadhls lhsdhls jdsbhs dlahd  ahdnls dsad lhh111")
 
@@ -45,6 +43,9 @@ while running:
 		direction = 'RIGHT'
 		if clover.jumping or clover.character_rect.bottom != window_h:
 			action = 3
+		elif clover.slash:
+			action = 2
+			clover.character_rect.x -= 7
 		else:
 			action = 1
 	elif keys[pygame.K_LEFT]:
@@ -52,11 +53,16 @@ while running:
 		direction = 'LEFT'
 		if clover.jumping or clover.character_rect.bottom != window_h:
 			action = 3
+		elif clover.slash:
+			action = 2
+			clover.character_rect.x += 7
 		else:
 			action = 1
 	else:
 		if clover.jumping or clover.character_rect.bottom != window_h:
 			action = 3
+		elif clover.slash:
+			action = 2
 		else:
 			action = 0
 
@@ -69,6 +75,10 @@ while running:
 				if clover.landed:
 					clover.jumping = True
 					action = 3
+			if event.key == pygame.K_SPACE:
+				if clover.landed:
+					clover.slash = True
+					action = 2
 
 	# filling the window with beige color
 	window.fill(beige)
