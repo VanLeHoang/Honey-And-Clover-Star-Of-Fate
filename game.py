@@ -154,8 +154,14 @@ class Character:
 		# jumping definition
 		self.jumping = False
 		self.landed = True
-		self.slash = False
 		self.gravity = self.height // 3
+
+		# attacking definition
+		self.slash1 = False
+		self.slash2 = False
+		self.slash3 = False
+		self.slash_combo1 = False
+		self.slash_combo2 = False
 
 		# make a list of frames based on each action
 		for action in action_list:
@@ -194,12 +200,32 @@ class Character:
 					self.current_frame = (self.current_frame + 1) % len(self.animation[action])
 					self.start_time = self.current_time
 			case 2: # attack
-				if self.current_time - self.start_time > frame_rate - 0.17:
-					self.current_frame = (self.current_frame + 1) % len(self.animation[action])
-					self.start_time = self.current_time
-					if self.current_frame == 0:
-						self.slash = False
-						action = 0
+				if self.current_time - self.start_time > frame_rate - 0.09:
+					if self.slash1:
+						self.slash_combo1 = True
+						self.current_frame = (self.current_frame + 1) % len(self.animation[action])
+						self.start_time = self.current_time
+						if self.current_frame == len(self.animation[action]) // 3:
+							self.slash1 = False
+							self.slash_combo1 = False
+							self.current_frame -= 1
+					if self.slash2 and not self.slash1: # check if the first slash is complete
+						self.slash_combo2 = True
+						self.current_frame = (self.current_frame + 1) % len(self.animation[action]) # frame will start from last frame of first slash
+						self.start_time = self.current_time
+						if self.current_frame == (len(self.animation[action]) // 3) * 2:
+							self.slash_combo2 = False
+							self.slash2 = False
+							self.current_frame -= 1
+					if self.slash3 and not self.slash2: # check if the second slash is complete
+						self.current_frame = (self.current_frame + 1) % len(self.animation[action]) # frame will start from last frame of second slash
+						self.start_time = self.current_time
+						if direction == "RIGHT":
+							self.character_rect.x += 54
+						elif direction == "LEFT":
+							self.character_rect.x -= 54
+						if self.current_frame == 0: # finish action when the animation loop back the beginning
+							self.slash3 = False
 			case 3: # jump
 				if self.current_frame < 2:
 					if self.current_time - self.start_time > frame_rate - 0.17:

@@ -31,41 +31,11 @@ direction = 'IDLE'
 
 dialog1 = game.Chatbox(0, 0, 400, 200, "chatbox.png", "Roboto", 30, mud, "Hello, I am Van and I love Wade. He is my honeyboo <3 absd ajs sd  adsasd f sjjd ahoiwad lhsadhls lhsdhls jdsbhs dlahd  ahdnls dsad lhh111")
 
-clover = game.Character(0, 0, clover_size[0], clover_size[1], "spritesheet_clover.png", [2, 2, 5, 7, 3])
+clover = game.Character(0, 0, clover_size[0], clover_size[1], "spritesheet_clover.png", [2, 2, 6, 7, 3])
 clover.character_rect.bottom = window_h
 
 running = True
 while running:
-	# check key state for continuous movement
-	keys = pygame.key.get_pressed()
-	if keys[pygame.K_RIGHT]:
-		clover.character_rect.x += 7
-		direction = 'RIGHT'
-		if clover.jumping or clover.character_rect.bottom != window_h:
-			action = 3
-		elif clover.slash:
-			action = 2
-			clover.character_rect.x -= 7
-		else:
-			action = 1
-	elif keys[pygame.K_LEFT]:
-		clover.character_rect.x -= 7
-		direction = 'LEFT'
-		if clover.jumping or clover.character_rect.bottom != window_h:
-			action = 3
-		elif clover.slash:
-			action = 2
-			clover.character_rect.x += 7
-		else:
-			action = 1
-	else:
-		if clover.jumping or clover.character_rect.bottom != window_h:
-			action = 3
-		elif clover.slash:
-			action = 2
-		else:
-			action = 0
-
 	for event in pygame.event.get():
 		if event.type == pygame.QUIT:
 			running = False
@@ -74,11 +44,49 @@ while running:
 			if event.key == pygame.K_UP:
 				if clover.landed:
 					clover.jumping = True
-					action = 3
-			if event.key == pygame.K_SPACE:
-				if clover.landed:
-					clover.slash = True
-					action = 2
+			if event.key == pygame.K_SPACE and clover.landed:
+				if not clover.slash2 or clover.slash3:
+					clover.slash1 = True
+			if event.key == pygame.K_SPACE and clover.slash_combo1:
+				clover.slash2 = True
+			if event.key == pygame.K_SPACE and clover.slash_combo2:
+				clover.slash3 = True
+
+	# check key state for continuous movement
+	keys = pygame.key.get_pressed()
+	if keys[pygame.K_RIGHT]:
+		clover.character_rect.x += 7
+		direction = 'RIGHT'
+		if clover.jumping or clover.character_rect.bottom != window_h:
+			clover.character_rect.x += 7
+			action = 3
+			if clover.current_frame < 2: # add a little pause before jumping
+				clover.character_rect.x -= 13
+		elif clover.slash1 or clover.slash2 or clover.slash3:
+			action = 2
+			clover.character_rect.x -= 7 # prevent character to move when attacking
+		else:
+			action = 1
+	elif keys[pygame.K_LEFT]:
+		clover.character_rect.x -= 7
+		direction = 'LEFT'
+		if clover.jumping or clover.character_rect.bottom != window_h:
+			clover.character_rect.x -= 7
+			action = 3
+			if clover.current_frame < 2:
+				clover.character_rect.x += 13
+		elif clover.slash1 or clover.slash2 or clover.slash3:
+			action = 2
+			clover.character_rect.x += 7
+		else:
+			action = 1
+	else:
+		if clover.jumping or clover.character_rect.bottom != window_h:
+			action = 3
+		elif clover.slash1 or clover.slash2 or clover.slash3:
+			action = 2
+		else:
+			action = 0
 
 	# filling the window with beige color
 	window.fill(beige)
